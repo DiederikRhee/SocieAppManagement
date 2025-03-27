@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Optional, List
 from datetime import datetime
 import os
+from functools import cache
 
 @dataclass
 class Module:
@@ -67,19 +68,28 @@ class SocieConnect():
         response.raise_for_status()
         self.headers["authorization"]= f"{response.json()['token_type']} {response.json()['access_token']}"
 
+    @cache
     def getModules(self) -> List[Module]:
         response = requests.get(self.buildUrl("modules"), headers=self.headers)
         return [Module(**module_dict) for module_dict in response.json()]
     
+    def getModuleByName(self, name: str) -> Module:
+        return next((module for module in self.getModules() if module.name == name), None)
+    
+    def getModuleById(self, id: str) -> Module:
+        return next((module for module in self.getModules() if module._id == id), None)
+    
+    @cache
     def getMemberships(self) -> List[Membership]:
         response = requests.get(self.buildUrl("memberships"), headers=self.headers)
         return [Membership(**membership_dict) for membership_dict in response.json()]
+    
+    
 
 
 if __name__ == '__main__':
     api = SocieConnect()
     api.login()
 
-    print (api.getModules()[0])
-    print (api.getMemberships()[0])
+    print (api.getModuleByName("weekbrieftestje"))
 
