@@ -1,47 +1,48 @@
 import requests
 from dataclasses import dataclass
 from typing import Optional, List
+from datetime import datetime
 import os
 
 @dataclass
 class Module:
-    modified: str
-    iconFa: str
-    groups: list
-    orderNumber: int
-    created: str
-    community_id: str
-    _id: str
-    icon: str
-    type: str
     name: str
+    community_id: str
+    icon: str
+    _id: str
+    groups: str
+    type: str
     isEnabled: bool
-    media: Optional[list] = None
-    pages: Optional[list] = None
-    preferences: Optional[dict] = None
-    widgets: Optional[list] = None
-    preset: Optional[str] = None
+    modified: datetime
+    created: datetime
+    iconFa: str
+    orderNumber: int
     primaryGroupsWidgetEnabled: Optional[bool] = None
-    payment: Optional[dict] = None
-    external: Optional[dict] = None
+    pages: Optional[str] = None
     isGuestAllowed: Optional[bool] = None
-    primaryItems: Optional[list] = None
+    preset: Optional[str] = None
+    payment: Optional[str] = None
+    widgets: Optional[str] = None
+    external: Optional[str] = None
+    media: Optional[str] = None
+    primaryItems: Optional[str] = None
+    preferences: Optional[str] = None
 
 @dataclass
 class Membership:
-    preferences: dict
-    created: str
-    roles: dict
+    preferences: str
+    extraFields: str
+    created: datetime
     feed_id: str
+    person: str
     community_id: str
     _id: str
-    person: dict
-    address: dict
-    extraFields: dict
-    status: dict
-    modified: Optional[str] = None
+    roles: str
+    address: str
+    status: str
+    modified: Optional[datetime] = None
     user_id: Optional[str] = None
-    privacy: Optional[dict] = None
+    privacy: Optional[str] = None
 
 class SocieConnect():
     def __init__(self, appId: str = os.getenv("appId")):
@@ -79,5 +80,6 @@ if __name__ == '__main__':
     api = SocieConnect()
     api.login()
 
+    print (api.getModules()[0])
     print (api.getMemberships()[0])
 
