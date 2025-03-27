@@ -4,46 +4,62 @@ from typing import Optional, List
 from datetime import datetime
 import os
 from functools import cache
+from enum import Enum
+
+class ModuleTypes(Enum):
+    BIRTHDAYS = "BIRTHDAYS"
+    DOCUMENTS = "DOCUMENTS"
+    DONATIONS = "DONATIONS"
+    EVENTS = "EVENTS"
+    GROUPS = "GROUPS"
+    INFORMATION = "INFORMATION"
+    MEMBERS = "MEMBERS"
+    NEWS = "NEWS"
+    NOTIFICATIONS = "NOTIFICATIONS"
+    OVERVIEW = "OVERVIEW"
+    STATISTICS = "STATISTICS"
+    WEBSITES = "WEBSITES"
 
 @dataclass
 class Module:
-    name: str
-    community_id: str
     icon: str
+    community_id: str
     _id: str
-    groups: str
-    type: str
-    isEnabled: bool
-    modified: datetime
-    created: datetime
     iconFa: str
     orderNumber: int
-    primaryGroupsWidgetEnabled: Optional[bool] = None
-    pages: Optional[str] = None
-    isGuestAllowed: Optional[bool] = None
-    preset: Optional[str] = None
-    payment: Optional[str] = None
-    widgets: Optional[str] = None
+    modified: datetime
+    name: str
+    created: datetime
+    isEnabled: bool
+    type: ModuleTypes
+    groups: Optional[List[dict]] = None
     external: Optional[str] = None
-    media: Optional[str] = None
     primaryItems: Optional[str] = None
+    isGuestAllowed: Optional[bool] = None
+    widgets: Optional[str] = None
+    preset: Optional[str] = None
+    primaryGroupsWidgetEnabled: Optional[bool] = None
+    payment: Optional[str] = None
+    media: Optional[str] = None
     preferences: Optional[str] = None
+    pages: Optional[List[dict]] = None
 
 @dataclass
 class Membership:
-    preferences: str
-    extraFields: str
-    created: datetime
-    feed_id: str
-    person: str
+    roles: str
     community_id: str
     _id: str
-    roles: str
-    address: str
+    feed_id: str
+    extraFields: str
+    person: str
+    created: datetime
     status: str
+    preferences: str
+    address: str
     modified: Optional[datetime] = None
-    user_id: Optional[str] = None
     privacy: Optional[str] = None
+    user_id: Optional[str] = None
+
 
 class SocieConnect():
     def __init__(self, appId: str = os.getenv("appId")):
@@ -69,6 +85,11 @@ class SocieConnect():
         self.headers["authorization"]= f"{response.json()['token_type']} {response.json()['access_token']}"
 
     @cache
+    def getMemberships(self) -> List[Membership]:
+        response = requests.get(self.buildUrl("memberships"), headers=self.headers)
+        return [Membership(**membership_dict) for membership_dict in response.json()]
+
+    @cache
     def getModules(self) -> List[Module]:
         response = requests.get(self.buildUrl("modules"), headers=self.headers)
         return [Module(**module_dict) for module_dict in response.json()]
@@ -79,17 +100,24 @@ class SocieConnect():
     def getModuleById(self, id: str) -> Module:
         return next((module for module in self.getModules() if module._id == id), None)
     
-    @cache
-    def getMemberships(self) -> List[Membership]:
-        response = requests.get(self.buildUrl("memberships"), headers=self.headers)
-        return [Membership(**membership_dict) for membership_dict in response.json()]
     
-    
+    def getDocuments(self, module: Module):
+        if (module.type != ModuleTypes.DOCUMENTS.value): return []
+        if (len(module.pages) == 0): return []
+        if ("_id" not in module.pages[0]): return []
+
+        url = self.buildUrl(f"modules/{module._id}/pages/{module.pages[0]['_id']}/documents")
+        return  requests.get(url, headers=self.headers).json()
+
+
 
 
 if __name__ == '__main__':
     api = SocieConnect()
     api.login()
 
-    print (api.getModuleByName("weekbrieftestje"))
+    weekbriefModule = api.getModuleByName("Weekbrief Broederkerk")
+    docs = api.getDocuments(weekbriefModule)
+    q = 0
+
 
